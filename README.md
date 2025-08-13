@@ -43,16 +43,16 @@ Configuration options:
 
 ### ✅ Approved Transaction
 **January Scenario:**
-- Employee creates Material Request for 850 EGP
+- Employee creates Purchase Order for 850 EGP
 - **Result:** ✅ Approved (under 1,000 EGP monthly limit)
 
 ### ❌ Blocked/Warning Transaction
 **January Scenario:**
-- Employee attempts Material Request for 1,200 EGP  
+- Employee attempts Purchase Order for 1,200 EGP  
 - **Result:** ❌ Blocked or ⚠️ Warning shown (exceeds 8.33% monthly allocation)
 
 ### System Behavior
-When attempting Purchase Orders or Material Requests exceeding the monthly limit (1,000 EGP in January), the system will:
+When attempting Purchase Orders exceeding the monthly limit (1,000 EGP in January), the system will:
 - Block the transaction if set to "Stop"
 - Show warning if set to "Warn"
 
@@ -79,6 +79,61 @@ Configure system behavior when monthly budgets are exceeded:
 - 🔧 **Flexible Configuration:** Choose between strict enforcement or warnings
 
 ---
+🔄 Main Stages:
+
+1️⃣ Budget Request
+
+- Submission by department managers
+
+-  Specify details and justifications
+
+-  Attach supporting documents
+
+2️⃣ Approval Workflow
+
+-  Department Manager → Finance Manager → General Manager
+
+-  Set clear approval and evaluation criteria
+
+3️⃣ Budget Creation
+
+-  Prepare the base budget
+
+-  Define control settings
+
+-  Link accounts and cost centers
+
+4️⃣ Monthly Distribution
+
+-  Equal allocation or as needed
+
+-  Flexible seasonal distribution
+
+-  Customizable settings
+
+5️⃣ Control & Monitoring
+
+-  Real-time transaction validation
+
+-  Apply stop/warning actions
+
+-  Automatically update balances
+
+6️⃣ Reporting & Alerts
+
+-  Instant dashboard
+
+-  Email alerts
+
+Scheduled periodic reports
+
+🎯 Key Features:
+✅ Full control from start to finish
+✅ Flexible monthly allocation
+✅ Complete transparency for all parties
+✅ Smart alerts for proactive control
+✅ Real-time monitoring and reporting
+
 
 ## License
 MIT
