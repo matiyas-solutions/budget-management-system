@@ -225,6 +225,12 @@ doc_events = {
 
 fixtures = [
     {
+        "dt": "Workspace",
+        "filters": [
+            ["module", "=", "budge"]
+        ]
+    },
+    {
         "dt": "Client Script",
         "filters": [
             ["module", "=", "budge"]
