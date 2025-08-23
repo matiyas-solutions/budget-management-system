@@ -225,6 +225,11 @@ doc_events = {
 # after_migrate = "budget.budget.setup_config.run"
 
 fixtures = [
+    {
+        "dt": "DocType Link",
+        "filters": [["parent", "in", ["Budget Control", "Budget Request"]]]
+    },
+
      {
         "dt": "Custom Field",
         "filters": [
