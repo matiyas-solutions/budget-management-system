@@ -277,10 +277,4 @@ fixtures = [
             ["module", "=", "budge"]
         ]
     },
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["module", "=", "budge"]
-        ]
-    }
 ]
