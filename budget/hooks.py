@@ -224,6 +224,23 @@ doc_events = {
 # after_migrate = "budget.budget.setup_config.run"
 
 fixtures = [
+     {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", [
+                "Executed prices",
+                "Announced prices",
+                "Treasury bill setting",
+                "Treasury bills",
+                "Budget Control",
+                "Budget Request",
+                "Budget Items Details",
+                "Items Summary",
+                "Item Department",
+                "Budget Control Log"
+            ]]
+        ]
+    },
     {
         "dt": "Workspace",
         "filters": [
