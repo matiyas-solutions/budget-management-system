@@ -602,6 +602,11 @@ def update_budget_amount(cost_center, item_code, account, month, new_amount, act
     """
     try:
         # التحقق من الصلاحيات
+        print("Cost Center",cost_center)
+        print("item code",item_code)
+        print("account",account)
+        print("month",month)
+        print("new_amount",new_amount, action)
         if not frappe.has_permission("Budget", "write"):
             frappe.throw(_("You don't have permission to update budget amounts"))
 
@@ -614,8 +619,8 @@ def update_budget_amount(cost_center, item_code, account, month, new_amount, act
             return {"success": False, "error": "Budget amount cannot be negative"}
 
         # البحث عن Budget الأساسي
-        md_name = find_budget(cost_center, account)
-
+        md_name = find_budget(cost_center, account, item_code)
+        print('MD ==>',md_name)
         if not md_name:
             return {
                 "success": False,
@@ -646,38 +651,56 @@ def update_budget_amount(cost_center, item_code, account, month, new_amount, act
         frappe.log_error(f"Budget update error: {str(e)}", "Budget Control Update")
         return {"success": False, "error": str(e)}
 
-
-def find_budget(cost_center, account):
+def find_budget(cost_center, account, item_code):
     """
     Find existing budget or create new one
     """
     try:
         # البحث عن Budget موجود
+
+        conditions = """
+            ba.account = %(account)s
+            AND b.cost_center = %(cost_center)s
+            AND b.docstatus = 1
+        """
         filters = {
+            "account": account,
             "cost_center": cost_center,
-            "docstatus": ["<", 2],  # Draft or Submitted
         }
+        
 
-        existing_budget = frappe.get_list(
-            "Budget", filters=filters, fields=["name", "docstatus"], limit=1
-        )
-        if not existing_budget:
-            return None
+        if item_code:
+            conditions += " AND ba.custom_item_code = %(item_code)s "  
+            filters["item_code"] = item_code  
+        query = f"""
+                select 
+                    b.name as budget_name,
+                    b.cost_center as cost_center,
+                    ba.account as account,
+                    ba.custom_item_code as item_code ,
+                    ba.custom_monthly_distribution as monthly_distribution
+                from `tabBudget` b
+                left join `tabBudget Account` ba 
+                on ba.parent = b.name 
+                WHERE {conditions}
+            """
+        result = frappe.db.sql(query, filters, as_dict=True)
 
-        if existing_budget:
-            budget_doc = frappe.get_doc("Budget", existing_budget[0].name)
+        print('existing Budget',result)
 
-            budget_account = next(
-                (row for row in budget_doc.accounts if row.account == account), None
-            )
-            if not budget_account:
-                return None
-            return budget_account.custom_monthly_distribution
+        if len(result) > 1 :
+            frappe.throw("You have more than one Budget matching these filters")
+
+        if result and len(result) == 1:
+            monthly_distribution = result[0].monthly_distribution
+            print('monthly_distribution',monthly_distribution)
+            if not monthly_distribution:
+                frappe.throw("Can't Find monthly distribution")
+            return monthly_distribution
 
     except Exception as e:
         frappe.log_error(f"Error finding/creating budget: {str(e)}", "Budget Control")
         return None
-
 
 def update_monthly_distribution(md_name, month, diff_amount, action):
     try:

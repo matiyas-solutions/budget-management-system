@@ -42,7 +42,7 @@
   "is_child_table": 0,
   "link_doctype": "Budget Control",
   "link_fieldname": "budget_request",
-  "modified": "2025-08-23 11:26:25.377638",
+  "modified": "2025-08-25 18:54:36.249274",
   "name": "jvdl79k14e",
   "parent": "Budget Request",
   "parent_doctype": null,

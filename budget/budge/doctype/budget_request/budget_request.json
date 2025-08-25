@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "format:BR-{department}-{fiscal_year}-{#####}",
- "creation": "2025-08-13 20:17:56.748955",
+ "creation": "2025-08-23 11:26:25.354081",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -50,6 +50,7 @@
    "options": "Budget Control"
   },
   {
+   "fetch_from": "budget_control.budget_controller",
    "fieldname": "budget_controller",
    "fieldtype": "Select",
    "label": "Budget Controller",
@@ -146,7 +147,7 @@
    "link_fieldname": "budget_request"
   }
  ],
- "modified": "2025-08-21 23:09:07.544672",
+ "modified": "2025-08-25 18:54:36.249274",
  "modified_by": "Administrator",
  "module": "budge",
  "name": "Budget Request",
@@ -166,6 +167,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

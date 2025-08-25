@@ -1,102 +1,105 @@
 # Copyright (c) 2025, ahmed and contributors
 # For license information, please see license.txt
+# pyright: reportUndefinedVariable=false
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
-
+from frappe.utils import nowdate
 class BudgetRequest(Document):
-	def before_submit(self):
-		self.validate_budget_items()
-		self.validate_cost_center()
-		self.validate_duplicate_items()
+    def before_submit(self):
+        self.validate_budget_items()
+        self.validate_cost_center()
+        self.validate_duplicate_items()
   
-	def on_submit(self):
-		check_and_create_budget(self.name)
+    def on_submit(self):
+        self.posting_date = nowdate()
+        self.status = "Requested"
+        check_and_create_budget(self.name)
           
-	def validate_cost_center(self):
-		if not self.cost_center:
-			frappe.throw("Please select a Cost Center before submitting the form.")
-	
-	def validate_budget_items(self):
-		if not self.budget_items_details or len(self.budget_items_details) == 0:
-			frappe.throw(_("Please add at least one budget item."))
+    def validate_cost_center(self):
+        if not self.cost_center:
+            frappe.throw("Please select a Cost Center before submitting the form.")
+    
+    def validate_budget_items(self):
+        if not self.budget_items_details or len(self.budget_items_details) == 0:
+            frappe.throw(_("Please add at least one budget item."))
 
-		accepted_item = [item for item in self.budget_items_details if item.status == "Accepted"]
-		if len(accepted_item) == 0:
-			not_accepted_rows = [str(item.idx) for item in self.budget_items_details]
-			frappe.throw(
-				"Please accept at least one item before submitting the form. "
-				f"Currently, all rows ({', '.join(not_accepted_rows)}) are not accepted."
-			)
+        accepted_item = [item for item in self.budget_items_details if item.status == "Accepted"]
+        if len(accepted_item) == 0:
+            not_accepted_rows = [str(item.idx) for item in self.budget_items_details]
+            frappe.throw(
+                "Please accept at least one item before submitting the form. "
+                f"Currently, all rows ({', '.join(not_accepted_rows)}) are not accepted."
+            )
 
-		invalid_rows = [
-			item for item in self.budget_items_details
-			if not item.expense_account or not item.expected_price or item.expected_price <= 0
-		]
-		if len(invalid_rows) > 0:
-			for item in self.budget_items_details:
-				if not item.expense_account or not item.expected_price or item.expected_price <= 0:
-					frappe.throw(
-						f"Row #{item.idx}: Please ensure this row has a valid expense account "
-						f"and expected price greater than 0."
-					)
+        invalid_rows = [
+            item for item in self.budget_items_details
+            if not item.expense_account or not item.expected_price or item.expected_price <= 0
+        ]
+        if len(invalid_rows) > 0:
+            for item in self.budget_items_details:
+                if not item.expense_account or not item.expected_price or item.expected_price <= 0:
+                    frappe.throw(
+                        f"Row #{item.idx}: Please ensure this row has a valid expense account "
+                        f"and expected price greater than 0."
+                    )
 
-		# ✅ check for duplicate expense accounts
-		seen_accounts = {}
-		for item in self.budget_items_details:
-			if item.expense_account in seen_accounts:
-				frappe.throw(
-					_("Duplicate Expense Account found in row #{0}. "
-					  "Expense Account <b>{1}</b> is already used in row #{2}.").format(
-						item.idx, item.expense_account, seen_accounts[item.expense_account]
-					)
-				)
-			else:
-				seen_accounts[item.expense_account] = item.idx
+        # ✅ check for duplicate expense accounts
+        seen_accounts = {}
+        for item in self.budget_items_details:
+            if item.expense_account in seen_accounts:
+                frappe.throw(
+                    _("Duplicate Expense Account found in row #{0}. "
+                      "Expense Account <b>{1}</b> is already used in row #{2}.").format(
+                        item.idx, item.expense_account, seen_accounts[item.expense_account]
+                    )
+                )
+            else:
+                seen_accounts[item.expense_account] = item.idx
 
              
                 
-	def validate_duplicate_items(self):
-		for row in self.budget_items_details:
-			duplicates = frappe.db.sql("""
-				SELECT 
-					br.name AS budget_request_name,
-					br.docstatus AS budget_request_status,
-					br.fiscal_year,
-					br.cost_center,
-					bid.item_code,
-					bid.expense_account
-				FROM `tabBudget Request` br
-				LEFT JOIN `tabBudget Items Details` bid 
-					ON br.name = bid.parent
-				WHERE br.fiscal_year = %s
-				  AND br.cost_center = %s
-				  AND bid.item_code = %s
-				  AND bid.expense_account = %s
-				  AND br.name != %s
-				  AND br.docstatus < 2
-			""", (
-				self.fiscal_year,
-				self.cost_center,
-				row.item_code,
-				row.expense_account,
-				self.name
-			), as_dict=True)
+    def validate_duplicate_items(self):
+        for row in self.budget_items_details:
+            duplicates = frappe.db.sql("""
+                SELECT 
+                    br.name AS budget_request_name,
+                    br.docstatus AS budget_request_status,
+                    br.fiscal_year,
+                    br.cost_center,
+                    bid.item_code,
+                    bid.expense_account
+                FROM `tabBudget Request` br
+                LEFT JOIN `tabBudget Items Details` bid 
+                    ON br.name = bid.parent
+                WHERE br.fiscal_year = %s
+                  AND br.cost_center = %s
+                  AND bid.item_code = %s
+                  AND bid.expense_account = %s
+                  AND br.name != %s
+                  AND br.docstatus < 2
+            """, (
+                self.fiscal_year,
+                self.cost_center,
+                row.item_code,
+                row.expense_account,
+                self.name
+            ), as_dict=True)
 
-			if duplicates:
+            if duplicates:
         
-				frappe.throw(
-					_("Duplicate Budget Item found for Item Code <b>{0}</b>, Expense Account <b>{1}</b>, "
-					  "Cost Center <b>{2}</b>, Fiscal Year <b>{3}</b> (Already exists in Request: {4})").format(
-						row.item_code,
-						row.expense_account,
-						self.cost_center,
-						self.fiscal_year,
-						duplicates[0].budget_request_name
-					),
-					title=_("Duplicate Budget Item")
-				)
+                frappe.throw(
+                    _("Duplicate Budget Item found for Item Code <b>{0}</b>, Expense Account <b>{1}</b>, "
+                      "Cost Center <b>{2}</b>, Fiscal Year <b>{3}</b> (Already exists in Request: {4})").format(
+                        row.item_code,
+                        row.expense_account,
+                        self.cost_center,
+                        self.fiscal_year,
+                        duplicates[0].budget_request_name
+                    ),
+                    title=_("Duplicate Budget Item")
+                )
 
 def check_and_create_budget(budget_request_name):
     """
@@ -104,17 +107,15 @@ def check_and_create_budget(budget_request_name):
     """
     try:
         # إنشاء database lock لمنع التكرار
-        print('fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+        
         frappe.db.sql("SELECT GET_LOCK(%s, 10)", (f"budget_creation_{budget_request_name}",))
         
         try:
-            # جلب الـ Budget Request
-            print('ddddddddddddddddddddddddddddddddddddddddddddddddddddd')
             budget_request = frappe.get_doc("Budget Request", budget_request_name)
             
             # فحص إذا كان البادجيت اتعمل خلاص
             if budget_request.budget_created:
-                frappe.throw("1Budget already created for this request.")
+                frappe.throw("Budget already created for this request.")
                 # return {
                 #     "success": False,
                 #     "error": _("1Budget already created for this request.")
@@ -123,7 +124,7 @@ def check_and_create_budget(budget_request_name):
             # فحص للـ duplicate budgets
             duplicate_check = check_for_duplicate_budgets_server(budget_request)
             if duplicate_check["has_duplicate"]:
-                frappe.throw("2Budget already created for this request.")
+                frappe.throw("Budget already created for this request.")
                 # return {
                 #     "success": False,
                 #     "error": duplicate_check["message"]
@@ -142,7 +143,8 @@ def check_and_create_budget(budget_request_name):
             }
             
         finally:
-            # تحرير الـ lock
+            msg = f"Budget {budget_name} For Is Created Successfully"
+            frappe.mesprint(msg)
             frappe.db.sql("SELECT RELEASE_LOCK(%s)", (f"budget_creation_{budget_request_name}",))
             
     except Exception as e:
