@@ -277,5 +277,11 @@ fixtures = [
             ["dt", "=", "Department"],
             ["fieldname", "=", "custom_manager"]
         ]
+    },
+     {
+        "doctype": "Custom Field",
+        "filters": [
+            ["dt", "=", "Treasury bills"]
+        ]
     }
 ]
